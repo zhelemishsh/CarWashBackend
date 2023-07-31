@@ -22,7 +22,7 @@ public class UserAccount {
     @Id
     private int id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY) //TODO check LAZY
     @MapsId
     @JoinColumn(name = "account_id")
     private Account account;

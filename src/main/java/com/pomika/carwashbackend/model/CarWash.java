@@ -7,7 +7,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "car_washs")
+@Table(name = "car_washes")
 public class CarWash {
     public CarWash(){}
 
@@ -31,7 +31,7 @@ public class CarWash {
     @Id
     private int id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY) //TODO check LAZY
     @MapsId
     @JoinColumn(name = "account_id")
     private Account account;

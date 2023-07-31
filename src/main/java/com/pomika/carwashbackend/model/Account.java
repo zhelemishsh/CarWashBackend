@@ -13,11 +13,11 @@ public class Account {
 
     public Account(int id,
                    String password,
-                   String phone_number,
+                   String phoneNumber,
                    AccountRole accountRole){
         this.id = id;
         this.password = password;
-        this.phone_number = phone_number;
+        this.phoneNumber = phoneNumber;
         this.accountRole = accountRole;
     }
 
@@ -30,7 +30,7 @@ public class Account {
     private String password;
 
     @Column(name = "phone_number")
-    private String phone_number;
+    private String phoneNumber;
 
     @Column(name = "role")
     private AccountRole accountRole;
