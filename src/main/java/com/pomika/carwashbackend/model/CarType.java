@@ -2,5 +2,6 @@ package com.pomika.carwashbackend.model;
 
 public enum CarType {
     LIGHTWEIGHT,
-    MOTORBIKE
+    MOTORBIKE,
+    TRUCK
 }
