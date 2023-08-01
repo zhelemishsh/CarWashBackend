@@ -14,7 +14,7 @@ public class CarWash {
     public CarWash(Account account,
             String name,
             double rating,
-            byte[] picture,
+            String picture,
             String address,
             double latitude,
             double longitude
@@ -44,7 +44,7 @@ public class CarWash {
 
     @Lob
     @Column(name = "picture")
-    private byte[] picture;
+    private String picture;
 
     @Column(name = "address")
     private String address;

@@ -13,9 +13,11 @@ public class UserAccount {
 
     public UserAccount(Account account,
                        String name,
-                       byte[] picture){
+                       Double rating,
+                       String picture){
         this.account = account;
         this.name = name;
+        this.rating = rating;
         this.picture = picture;
     }
 
@@ -35,5 +37,5 @@ public class UserAccount {
 
     @Lob
     @Column(name = "picture")
-    private byte[] picture;
+    private String picture;
 }
