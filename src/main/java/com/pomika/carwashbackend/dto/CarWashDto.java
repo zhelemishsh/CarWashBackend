@@ -1,25 +1,12 @@
 package com.pomika.carwashbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public class CarWashDto {
-    public CarWashDto(
-            int id,
-            String phoneNumber,
-            String name,
-            String picture,
-            double rating,
-            String address
-    ){
-        this.id = id;
-        this.name= name;
-        this.phoneNumber = phoneNumber;
-        this.picture = picture;
-        this.rating = rating;
-        this.address = address;
-    }
 
     @JsonProperty("user_id")
     private final int id;
@@ -38,4 +25,10 @@ public class CarWashDto {
 
     @JsonProperty("address")
     private final String address;
+
+    @JsonProperty("latitude")
+    private final double latitude;
+
+    @JsonProperty("longitude")
+    private final double longitude;
 }

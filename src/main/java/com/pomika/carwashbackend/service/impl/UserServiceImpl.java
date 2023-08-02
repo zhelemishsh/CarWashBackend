@@ -138,9 +138,9 @@ public class UserServiceImpl implements UserService {
 
     private CarDto carEntityToDto(Car car){
         return new CarDto(
+                car.getId(),
                 car.getNumber(),
                 car.getName(),
-                car.getCarType(),
-                car.getId());
+                car.getCarType());
     }
 }

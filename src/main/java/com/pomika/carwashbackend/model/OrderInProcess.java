@@ -16,10 +16,10 @@ public class OrderInProcess {
 
     public OrderInProcess(Car car,
                           Date startTime,
-                          Set<Service> services){
+                          Set<WashService> washServices){
         this.car = car;
         this.startTime = startTime;
-        this.services = services;
+        this.washServices = washServices;
     }
 
     @Id
@@ -34,5 +34,5 @@ public class OrderInProcess {
     private Date startTime;
 
     @ManyToMany
-    private Set<Service> services;
+    private Set<WashService> washServices;
 }

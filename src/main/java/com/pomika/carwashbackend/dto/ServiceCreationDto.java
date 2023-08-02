@@ -19,12 +19,8 @@ public class ServiceCreationDto {
         this.price = price;
     }
 
-    @JsonProperty("car_type")
     private final CarType carType;
-    @JsonProperty("service_type")
     private final ServiceType serviceType;
-    @JsonProperty("wash_time")
     private final int washTime;
-    @JsonProperty("price")
     private final int price;
 }

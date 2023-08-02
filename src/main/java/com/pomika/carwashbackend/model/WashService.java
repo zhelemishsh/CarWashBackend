@@ -8,15 +8,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "services")
-public class Service {
-    public Service(){}
+public class WashService {
+    public WashService(){}
 
-    public Service(int id,
-            CarWash carWash,
-            CarType carType,
-            ServiceType serviceType,
-            int washTime,
-            int price
+    public WashService(int id,
+                       CarWash carWash,
+                       CarType carType,
+                       ServiceType serviceType,
+                       int washTime,
+                       int price
             ){
         this.id = id;
         this.carWash = carWash;

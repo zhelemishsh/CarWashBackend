@@ -6,7 +6,7 @@ import com.pomika.carwashbackend.exception.UserServiceException;
 import com.pomika.carwashbackend.model.Account;
 import com.pomika.carwashbackend.model.AccountRole;
 import com.pomika.carwashbackend.model.CarWash;
-import com.pomika.carwashbackend.model.UserAccount;
+import com.pomika.carwashbackend.model.WashService;
 import com.pomika.carwashbackend.repository.AccountRepository;
 import com.pomika.carwashbackend.repository.CarWashRepository;
 import com.pomika.carwashbackend.repository.ServiceRepository;
@@ -83,18 +83,18 @@ public class CarWashServiceImpl implements CarWashService {
     public void addService(String ownerPhoneNumber, ServiceCreationDto serviceCreationDto)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        com.pomika.carwashbackend.model.Service service = serviceRepository.findByCarWashAndCarTypeAndServiceType(
+        WashService washService = serviceRepository.findByCarWashAndCarTypeAndServiceType(
                 carWash,
                 serviceCreationDto.getCarType(),
                 serviceCreationDto.getServiceType()
         );
 
-        if (service != null){
+        if (washService != null){
             throw new CarWashServiceException("Service " + serviceCreationDto.getServiceType() +
                     " with car type " + serviceCreationDto.getCarType() + " already exists");
         }
 
-        serviceRepository.save(new com.pomika.carwashbackend.model.Service(
+        serviceRepository.save(new WashService(
                 0,
                 carWash,
                 serviceCreationDto.getCarType(),
@@ -108,7 +108,7 @@ public class CarWashServiceImpl implements CarWashService {
     public void deleteService(String ownerPhoneNumber, int serviceId)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        Optional<com.pomika.carwashbackend.model.Service> service = serviceRepository.findById(serviceId);
+        Optional<WashService> service = serviceRepository.findById(serviceId);
 
         if (service.isEmpty()){
             throw new CarWashServiceException("Service with id " + serviceId + " does not exists");
@@ -126,8 +126,8 @@ public class CarWashServiceImpl implements CarWashService {
     public List<ServiceDto> getServices(String ownerPhoneNumber)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        List<com.pomika.carwashbackend.model.Service> services = serviceRepository.findByCarWash(carWash);
-        return services.stream().map(this::serviceEntityToDto).collect(Collectors.toList());
+        List<WashService> washServices = serviceRepository.findByCarWash(carWash);
+        return washServices.stream().map(this::serviceEntityToDto).collect(Collectors.toList());
     }
 
     @Override
@@ -163,15 +163,17 @@ public class CarWashServiceImpl implements CarWashService {
                 carWash.getName(),
                 carWash.getPicture(),
                 carWash.getRating(),
-                carWash.getAddress());
+                carWash.getAddress(),
+                carWash.getLatitude(),
+                carWash.getLongitude());
     }
 
-    private ServiceDto serviceEntityToDto(com.pomika.carwashbackend.model.Service service){
+    private ServiceDto serviceEntityToDto(WashService washService){
         return new ServiceDto(
-                service.getId(),
-                service.getCarType(),
-                service.getServiceType(),
-                service.getWashTime(),
-                service.getPrice());
+                washService.getId(),
+                washService.getCarType(),
+                washService.getServiceType(),
+                washService.getWashTime(),
+                washService.getPrice());
     }
 }
