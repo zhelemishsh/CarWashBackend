@@ -14,14 +14,14 @@ public class WashService {
     public WashService(int id,
                        CarWash carWash,
                        CarType carType,
-                       ServiceType serviceType,
+                       WashServiceType washServiceType,
                        int washTime,
                        int price
             ){
         this.id = id;
         this.carWash = carWash;
         this.carType = carType;
-        this.serviceType = serviceType;
+        this.washServiceType = washServiceType;
         this.washTime = washTime;
         this.price = price;
     }
@@ -39,7 +39,7 @@ public class WashService {
     private CarType carType;
 
     @Column(name = "service_type")
-    private ServiceType serviceType;
+    private WashServiceType washServiceType;
 
     @Column(name = "wash_time")
     private int washTime;
