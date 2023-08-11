@@ -31,7 +31,7 @@ public class WashService {
     @Column(name = "id")
     private int id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_wash_id")
     private CarWash carWash;
 

@@ -1,7 +1,6 @@
 package com.pomika.carwashbackend.service.impl;
 
 import com.pomika.carwashbackend.dto.*;
-import com.pomika.carwashbackend.exception.CarWashServiceException;
 import com.pomika.carwashbackend.exception.OrderSessionServiceException;
 import com.pomika.carwashbackend.model.*;
 import com.pomika.carwashbackend.repository.*;
@@ -11,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+
 
 @Service
 public class OrderSessionServiceImpl implements OrderSessionService {
@@ -21,7 +23,7 @@ public class OrderSessionServiceImpl implements OrderSessionService {
     private final WashServiceRepository washServiceRepository;
     private final OrderInProcessRepository orderInProcessRepository;
     private final Timer timer;
-    private final Map<Integer,OrderSession> sessions;
+    private final Map<Integer, Order> sessions;
 
     @Autowired
     public OrderSessionServiceImpl(AccountRepository accountRepository,
@@ -35,7 +37,7 @@ public class OrderSessionServiceImpl implements OrderSessionService {
         this.washServiceRepository = washServiceRepository;
         this.orderInProcessRepository = orderInProcessRepository;
         this.timer = new Timer(true);
-        this.sessions = new HashMap<>();
+        this.sessions = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -48,14 +50,13 @@ public class OrderSessionServiceImpl implements OrderSessionService {
                     + userPhoneNumber);
         }
 
-        List<CarWash> carWashes = getCarWashesByOffer(orderSessionCreationDto);
-        if (carWashes.isEmpty()){
+        Map<String,CarWashServicesInOrder> services = getCarWashesByOffer(orderSessionCreationDto);
+        if (services.isEmpty()){
             throw new OrderSessionServiceException("There are no car washes with that parameters");
         }
 
-        OrderSession orderSession = new OrderSession(
+        Order order = new Order(
                 userAccount.getId(),
-                orderSessionCreationDto.getWashServiceTypes(),
                 orderSessionCreationDto.getStartTime(),
                 orderSessionCreationDto.getEndTime(),
                 new Car(orderSessionCreationDto.getCar().getId(),
@@ -63,10 +64,10 @@ public class OrderSessionServiceImpl implements OrderSessionService {
                         orderSessionCreationDto.getCar().getNumber(),
                         orderSessionCreationDto.getCar().getName(),
                         orderSessionCreationDto.getCar().getType()),
-                carWashes
+                services
         );
 
-        sessions.put(userAccount.getId(),orderSession);
+        sessions.put(userAccount.getId(), order);
 
         // TODO send notification to all Car washes
 
@@ -75,101 +76,111 @@ public class OrderSessionServiceImpl implements OrderSessionService {
     }
 
     @Override
-    public void acceptOffer(String userPhoneNumber, int offerId)
+    public void acceptOffer(String userPhoneNumber, String carWashPhoneNumber)
             throws OrderSessionServiceException{
         UserAccount userAccount = findUserByPhoneNumber(userPhoneNumber);
-        OrderSession orderSession = getOrderSessionById(userAccount.getId());
-        OrderOffer acceptedOffer = null;
-
-        for (OrderOffer offer : orderSession.getOffers()) {
-            if (offer.getId() == offerId) {
-                acceptedOffer = offer;
-                break;
-            }
-        }
+        Order order = getOrderById(userAccount.getId());
+        Offer acceptedOffer = order.getOffers().get(carWashPhoneNumber);
 
         if (acceptedOffer == null){
-            throw new OrderSessionServiceException("Odder with id " + offerId + " doesnt exists");
+            throw new OrderSessionServiceException("Offer from car wash with number "
+                    + carWashPhoneNumber + " doesnt exists");
         }
 
-        CarWash carWash = findCarWashByPhoneNumber(acceptedOffer.getCarWashPhoneNumber());
-
-        List<WashService> washServices = washServiceRepository.findByCarWashAndCarTypeAndWashServiceTypeIn(
-                carWash,
-                orderSession.getCar().getCarType(),
-                orderSession.getWashServiceTypes()
-        );
+        CarWashServicesInOrder carWashServicesInOrder = order.getCarWashAndServices().get(carWashPhoneNumber);
 
         OrderInProcess orderInProcess = new OrderInProcess(
-                orderSession.getCar(),
+                order.getCar(),
                 acceptedOffer.getStartTime(),
-                washServices
+                carWashServicesInOrder.getCarWash(),
+                carWashServicesInOrder.getServices()
         );
 
         orderInProcessRepository.save(orderInProcess);
+        sessions.remove(userAccount.getId());
     }
 
     @Override
     public void createOffer(String carWashPhoneNumber, OfferCreationDto offerCreationDto, int orderId)
             throws OrderSessionServiceException{
-        CarWash carWash = findCarWashByPhoneNumber(carWashPhoneNumber);
-        OrderSession orderSession = getOrderSessionById(orderId);
+        Order order = getOrderById(orderId);
 
-        if(!orderSession.getCarWashes().contains(carWash)){
+        CarWashServicesInOrder carWashServices = order.getCarWashAndServices().get(carWashPhoneNumber);
+
+        if(carWashServices == null){
             throw new OrderSessionServiceException("Car wash with number " + carWashPhoneNumber +
                     " dont participate in order with id " + orderId);
         }
 
-        OrderOffer offer = new OrderOffer(
-                orderSession.getOffers().size(),
-                offerCreationDto.getStartTime(),
-                offerCreationDto.getFullPrice(),
-                offerCreationDto.getWashTime(),
-                carWash.getRating(),
-                carWash.getAddress(),
-                new MapPosition(
-                        carWash.getLatitude(),
-                        carWash.getLongitude()),
-                carWash.getName(),
-                carWashPhoneNumber);
-
-
-        orderSession.getOffers().add(offer);
-        if(orderSession.getBestRating() < carWash.getRating()){
-            orderSession.setBestRating(carWash.getRating());
+        if(order.getOffers().get(carWashPhoneNumber) != null){
+            throw new OrderSessionServiceException("Car wash with number " + carWashPhoneNumber +
+                    " already created offer to order with id " + orderId);
         }
 
-        if(orderSession.getBestPrice() > offer.getPrice()){
-            orderSession.setBestPrice(offer.getPrice());
+        if (offerCreationDto.getStartTime().before(order.getStartTime()) ||
+                order.getEndTime().before(offerCreationDto.getStartTime())
+        ){
+            throw new OrderSessionServiceException("Offer time doesnt match order time interval");
+        }
+
+        Offer offer = new Offer(
+                offerCreationDto.getStartTime(),
+                carWashServices.getServices().stream().mapToInt(WashService::getPrice).sum(),
+                carWashServices.getServices().stream().mapToInt(WashService::getWashTime).sum()
+        );
+
+
+        order.getOffers().put(carWashPhoneNumber,offer);
+
+        if(order.getBestRating() < carWashServices.getCarWash().getRating()){
+            order.setBestRating(carWashServices.getCarWash().getRating());
+        }
+
+        if(order.getBestPrice() > offer.getPrice()){
+            order.setBestPrice(offer.getPrice());
         }
     }
 
     @Override
     public void declineOrder(String carWashPhoneNumber, int orderId)
             throws OrderSessionServiceException{
-        CarWash carWash = findCarWashByPhoneNumber(carWashPhoneNumber);
-        OrderSession orderSession = getOrderSessionById(orderId);
-        orderSession.getCarWashes().remove(carWash);
+        Order order = getOrderById(orderId);
+
+        if (order.getOffers().get(carWashPhoneNumber) != null){
+            throw new OrderSessionServiceException("Can not decline order with id "
+                    + orderId + " because of sent offer");
+        }
+
+        order.getCarWashAndServices().remove(carWashPhoneNumber);
     }
 
     @Override
     public List<OfferDto> getOffers(String userPhoneNumber)
             throws OrderSessionServiceException{
         UserAccount userAccount = findUserByPhoneNumber(userPhoneNumber);
-        OrderSession orderSession = getOrderSessionById(userAccount.getId());
-        return orderSession.getOffers().stream().map(this::orderOfferEntityToDto).collect(Collectors.toList());
+        Order order = getOrderById(userAccount.getId());
+        return order.getOffers().entrySet().stream().map(
+                o -> offerAndCarWashEntityToDto(
+                        o.getValue(),
+                        order.getCarWashAndServices().get(o.getKey()).getCarWash()
+                )
+        ).collect(Collectors.toList());
     }
 
     @Override
-    public List<OrderInListDto> getOrders(String carWashPhoneNumber)
+    public List<OrderDto> getOrders(String carWashPhoneNumber)
             throws OrderSessionServiceException{
-        CarWash carWash = findCarWashByPhoneNumber(carWashPhoneNumber);
 
-        List<OrderInListDto> orders = new ArrayList<>();
+        List<OrderDto> orders = new ArrayList<>();
 
-        for (OrderSession session : sessions.values()) {
-            if (session.getCarWashes().contains(carWash)) {
-                orders.add(orderSessionEntityToListDto(session));
+        for (Order order : sessions.values()) {
+            if (order.getCarWashAndServices().get(carWashPhoneNumber) != null &&
+                    order.getOffers().get(carWashPhoneNumber) == null
+            ){
+                orders.add(orderEntityToDto(
+                        order,
+                        order.getCarWashAndServices().get(carWashPhoneNumber).getServices())
+                );
             }
         }
         return orders;
@@ -177,14 +188,16 @@ public class OrderSessionServiceImpl implements OrderSessionService {
 
     @Override
     public OrderDto getOrder(String carWashPhoneNumber, int orderId) {
-        CarWash carWash = findCarWashByPhoneNumber(carWashPhoneNumber);
-        OrderSession orderSession = getOrderSessionById(orderId);
-        List<WashService> washServices = washServiceRepository.findByCarWashAndCarTypeAndWashServiceTypeIn(
-                carWash,
-                orderSession.getCar().getCarType(),
-                orderSession.getWashServiceTypes()
-        );
-        return orderSessionEntityToDto(orderSession,washServices);
+        Order order = getOrderById(orderId);
+
+        CarWashServicesInOrder carWashAndServices = order.getCarWashAndServices().get(carWashPhoneNumber);
+
+        if(carWashAndServices == null){
+            throw new OrderSessionServiceException("Car wash with number " + carWashPhoneNumber +
+                    " dont participate in order with id " + orderId);
+        }
+
+        return orderEntityToDto(order,carWashAndServices.getServices());
     }
 
     private Account findAccountByPhoneNumber(String phoneNumber){
@@ -206,45 +219,40 @@ public class OrderSessionServiceImpl implements OrderSessionService {
         return userAccount;
     }
 
-    private CarWash findCarWashByPhoneNumber(String phoneNumber){
-        Account account = findAccountByPhoneNumber(phoneNumber);
-        CarWash carWash =  carWashRepository.findByAccount(account);
-        if (carWash == null){
-            throw new CarWashServiceException("Car wash with phone number "
-                    + phoneNumber + "does not exists");
-        }
-        return carWash;
-    }
 
-    private List<CarWash> getCarWashesByOffer(OrderSessionCreationDto orderSessionCreationDto){
+    private Map<String,CarWashServicesInOrder> getCarWashesByOffer(OrderSessionCreationDto orderSessionCreationDto){
         List<CarWash> carWashes = carWashRepository.findCarWashesInSquare(
                 orderSessionCreationDto.getSearchArea().getCenter().getLatitude(),
                 orderSessionCreationDto.getSearchArea().getCenter().getLongitude(),
                 orderSessionCreationDto.getSearchArea().getRadius());
 
-        Iterator<CarWash> iterator = carWashes.iterator();
-        while(iterator.hasNext()){
-            CarWash carWash = iterator.next();
-            if (!checkCarWashCoordinates(
-                    carWash,
-                    orderSessionCreationDto.getSearchArea().getCenter().getLatitude(),
-                    orderSessionCreationDto.getSearchArea().getCenter().getLongitude(),
-                    orderSessionCreationDto.getSearchArea().getRadius())
-            ){
-                iterator.remove();
-                continue;
-            }
-
-            if (!checkCarWashServices(
-                    carWash,
-                    orderSessionCreationDto.getCar().getType(),
-                    orderSessionCreationDto.getWashServiceTypes())
-            ){
-                iterator.remove();
-            }
-        }
-
-        return carWashes;
+        return carWashes.stream()
+                .filter(
+                        o -> checkCarWashCoordinates(
+                                o,
+                                orderSessionCreationDto.getSearchArea().getCenter().getLatitude(),
+                                orderSessionCreationDto.getSearchArea().getCenter().getLongitude(),
+                                orderSessionCreationDto.getSearchArea().getRadius()
+                        )
+                )
+                .map(
+                        o -> getCarWashServicesByOrder(
+                                o,
+                                orderSessionCreationDto.getCar().getType(),
+                                orderSessionCreationDto.getWashServiceTypes()
+                        )
+                )
+                .filter(
+                        o -> o.getServices().size() == orderSessionCreationDto.getWashServiceTypes().size()
+                )
+                .collect(
+                        Collectors.toMap(
+                                o -> o.getCarWash().getAccount().getPhoneNumber(),
+                                o -> o,
+                                (o1, o2) -> o1,
+                                ConcurrentHashMap::new
+                        )
+                );
     }
 
     private boolean checkCarWashCoordinates(
@@ -263,39 +271,33 @@ public class OrderSessionServiceImpl implements OrderSessionService {
         return radius > distance;
     }
 
-    private boolean checkCarWashServices(
+    private CarWashServicesInOrder getCarWashServicesByOrder(
             CarWash carWash,
             CarType carType,
             List<WashServiceType> washServiceTypes
     ){
         List<WashService> washServices = washServiceRepository.findByCarWashAndCarTypeAndWashServiceTypeIn(
                 carWash,
-                carType,washServiceTypes
+                carType,
+                washServiceTypes
         );
-        return washServiceTypes.size() == washServices.size();
-    }
-
-    private OrderInListDto orderSessionEntityToListDto(OrderSession orderSession){
-        return new OrderInListDto(
-                orderSession.getUserId(),
-                orderSession.getBestPrice(),
-                orderSession.getBestRating(),
-                orderSession.getStartTime(),
-                orderSession.getEndTime(),
-                orderSession.getCar().getCarType(),
-                orderSession.getCar().getNumber(),
-                orderSession.getWashServiceTypes()
+        return new CarWashServicesInOrder(
+                carWash,
+                washServices
         );
     }
 
-    private OrderDto orderSessionEntityToDto(OrderSession orderSession, List<WashService> washServices){
+
+    private OrderDto orderEntityToDto(Order order, List<WashService> washServices){
         return new OrderDto(
-                orderSession.getUserId(),
-                orderSession.getStartTime(),
-                orderSession.getEndTime(),
-                orderSession.getCar().getCarType(),
-                orderSession.getCar().getNumber(),
-                orderSession.getCar().getName(),
+                order.getUserId(),
+                order.getBestPrice(),
+                order.getBestRating(),
+                order.getStartTime(),
+                order.getEndTime(),
+                order.getCar().getCarType(),
+                order.getCar().getNumber(),
+                order.getCar().getName(),
                 washServices.stream().map(this::washServiceEntityToDto).collect(Collectors.toList())
         );
     }
@@ -310,32 +312,32 @@ public class OrderSessionServiceImpl implements OrderSessionService {
         );
     }
 
-    private OfferDto orderOfferEntityToDto(OrderOffer offer){
+    private OfferDto offerAndCarWashEntityToDto(Offer offer, CarWash carWash){
         return new OfferDto(
-                offer.getId(),
+                carWash.getAccount().getPhoneNumber(),
                 offer.getStartTime(),
                 offer.getPrice(),
                 offer.getWashTime(),
-                offer.getCarWashRating(),
-                offer.getCarWashAddress(),
-                offer.getCarWashLocation().getLatitude(),
-                offer.getCarWashLocation().getLongitude(),
-                offer.getCarWashName()
+                carWash.getRating(),
+                carWash.getAddress(),
+                carWash.getLatitude(),
+                carWash.getLongitude(),
+                carWash.getName()
         );
     }
 
-    private OrderSession getOrderSessionById(int orderId){
-        OrderSession orderSession = sessions.get(orderId);
-        if(orderSession == null){
+    private Order getOrderById(int orderId){
+        Order order = sessions.get(orderId);
+        if(order == null){
             throw new OrderSessionServiceException("Order with id " + orderId + " does not exists");
         }
-        return orderSession;
+        return order;
     }
 }
 
 @AllArgsConstructor
 class EndSessionTask extends TimerTask{
-    private Map<Integer,OrderSession> sessions;
+    private Map<Integer, Order> sessions;
     private int sessionId;
     @Override
     public void run(){

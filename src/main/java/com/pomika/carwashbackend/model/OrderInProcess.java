@@ -16,10 +16,12 @@ public class OrderInProcess {
 
     public OrderInProcess(Car car,
                           Date startTime,
+                          CarWash carWash,
                           List<WashService> washServices){
         this.car = car;
         this.startTime = startTime;
         this.washServices = washServices;
+        this.carWash = carWash;
     }
 
     @Id

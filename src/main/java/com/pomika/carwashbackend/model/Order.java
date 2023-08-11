@@ -3,41 +3,38 @@ package com.pomika.carwashbackend.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
-public class OrderSession {
+public class Order {
 
     private final Integer userId;
-    private final List<WashServiceType> washServiceTypes;
-    private final List<OrderOffer> offers;
+    private final Map<String,Offer> offers;
     private final Date startTime;
     private final Date endTime;
     private final Car car;
-    private final List<CarWash> carWashes;
+    private Map<String, CarWashServicesInOrder> carWashAndServices;
     private double bestRating;
     private int bestPrice;
 
-    public OrderSession(
+    public Order(
             int userId,
-            List<WashServiceType> washServiceTypes,
             Date startTime,
             Date endTime,
             Car car,
-            List<CarWash> carWashes
+            Map<String,CarWashServicesInOrder> carWashAndServices
     ){
         this.userId = userId;
-        this.washServiceTypes = washServiceTypes;
         this.startTime = startTime;
         this.endTime = endTime;
         this.car = car;
-        this.carWashes = carWashes;
-        this.offers = new ArrayList<>();
+        this.offers = new ConcurrentHashMap<>();
         this.bestPrice = 0;
         this.bestRating = 0;
+        this.carWashAndServices = carWashAndServices;
     }
 
     @Override
@@ -46,11 +43,11 @@ public class OrderSession {
             return true;
         }
 
-        if(!(o instanceof OrderSession)){
+        if(!(o instanceof Order)){
            return false;
         }
 
-        return userId.equals(((OrderSession) o).userId);
+        return userId.equals(((Order) o).userId);
     }
 
     @Override

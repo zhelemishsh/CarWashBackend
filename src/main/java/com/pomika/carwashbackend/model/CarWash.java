@@ -3,6 +3,7 @@ package com.pomika.carwashbackend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
 
 @Entity
 @Getter

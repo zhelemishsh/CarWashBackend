@@ -15,6 +15,12 @@ public class OrderDto {
     @JsonProperty("id")
     private final int id;
 
+    @JsonProperty("best_price")
+    private final int best_price;
+
+    @JsonProperty("best_rating")
+    private final double best_rating;
+
     @JsonProperty("start_time")
     private final Date startTime;
 

@@ -9,16 +9,10 @@ import java.util.Date;
 public class OfferCreationDto {
 
     public OfferCreationDto(
-            @JsonProperty("start_time") Date startTime,
-            @JsonProperty("full_price") int fullPrice,
-            @JsonProperty("wash_time") int washTime
+            @JsonProperty("start_time") Date startTime
     ){
-        this.fullPrice = fullPrice;
         this.startTime = startTime;
-        this.washTime = washTime;
     }
 
     private final Date startTime;
-    private final int fullPrice;
-    private final int washTime;
 }

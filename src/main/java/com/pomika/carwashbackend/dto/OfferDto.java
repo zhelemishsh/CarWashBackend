@@ -9,8 +9,8 @@ import java.util.Date;
 @AllArgsConstructor
 @Getter
 public class OfferDto {
-    @JsonProperty("id")
-    private final int id;
+    @JsonProperty("car_wash_phone_number")
+    private final String carWashPhoneNumber;
 
     @JsonProperty("start_time")
     private final Date startTime;
