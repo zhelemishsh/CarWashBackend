@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Getter
@@ -16,10 +16,12 @@ public class OrderInProcess {
 
     public OrderInProcess(Car car,
                           Date startTime,
-                          Set<WashService> washServices){
+                          CarWash carWash,
+                          List<WashService> washServices){
         this.car = car;
         this.startTime = startTime;
         this.washServices = washServices;
+        this.carWash = carWash;
     }
 
     @Id
@@ -33,6 +35,11 @@ public class OrderInProcess {
     @Column(name = "start_time")
     private Date startTime;
 
+    @ManyToOne
+    @JoinColumn(name = "car_wash_id")
+    private CarWash carWash;
+
     @ManyToMany
-    private Set<WashService> washServices;
+    private List<WashService> washServices;
+
 }

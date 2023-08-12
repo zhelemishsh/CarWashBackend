@@ -9,7 +9,7 @@ import com.pomika.carwashbackend.model.CarWash;
 import com.pomika.carwashbackend.model.WashService;
 import com.pomika.carwashbackend.repository.AccountRepository;
 import com.pomika.carwashbackend.repository.CarWashRepository;
-import com.pomika.carwashbackend.repository.ServiceRepository;
+import com.pomika.carwashbackend.repository.WashServiceRepository;
 import com.pomika.carwashbackend.service.CarWashService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
 @Service
 public class CarWashServiceImpl implements CarWashService {
     private final CarWashRepository carWashRepository;
-    private final ServiceRepository serviceRepository;
+    private final WashServiceRepository washServiceRepository;
     private final AccountRepository accountRepository;
     @Autowired
     public CarWashServiceImpl(CarWashRepository carWashRepository,
-                              ServiceRepository serviceRepository,
+                              WashServiceRepository washServiceRepository,
                               AccountRepository accountRepository){
         this.carWashRepository = carWashRepository;
-        this.serviceRepository = serviceRepository;
+        this.washServiceRepository = washServiceRepository;
         this.accountRepository = accountRepository;
     }
     @Override
@@ -74,33 +74,33 @@ public class CarWashServiceImpl implements CarWashService {
     public void deleteCarWash(String ownerPhoneNumber) //TODO deleting car wash may decline service order
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        serviceRepository.deleteByCarWash(carWash);
+        washServiceRepository.deleteByCarWash(carWash);
         carWashRepository.delete(carWash);
         accountRepository.delete(carWash.getAccount());
     }
 
     @Override
-    public void addService(String ownerPhoneNumber, ServiceCreationDto serviceCreationDto)
+    public void addService(String ownerPhoneNumber, WashServiceCreationDto washServiceCreationDto)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        WashService washService = serviceRepository.findByCarWashAndCarTypeAndServiceType(
+        WashService washService = washServiceRepository.findByCarWashAndCarTypeAndWashServiceType(
                 carWash,
-                serviceCreationDto.getCarType(),
-                serviceCreationDto.getServiceType()
+                washServiceCreationDto.getCarType(),
+                washServiceCreationDto.getWashServiceType()
         );
 
         if (washService != null){
-            throw new CarWashServiceException("Service " + serviceCreationDto.getServiceType() +
-                    " with car type " + serviceCreationDto.getCarType() + " already exists");
+            throw new CarWashServiceException("Service " + washServiceCreationDto.getWashServiceType() +
+                    " with car type " + washServiceCreationDto.getCarType() + " already exists");
         }
 
-        serviceRepository.save(new WashService(
+        washServiceRepository.save(new WashService(
                 0,
                 carWash,
-                serviceCreationDto.getCarType(),
-                serviceCreationDto.getServiceType(),
-                serviceCreationDto.getWashTime(),
-                serviceCreationDto.getPrice()
+                washServiceCreationDto.getCarType(),
+                washServiceCreationDto.getWashServiceType(),
+                washServiceCreationDto.getWashTime(),
+                washServiceCreationDto.getPrice()
         ));
     }
 
@@ -108,7 +108,7 @@ public class CarWashServiceImpl implements CarWashService {
     public void deleteService(String ownerPhoneNumber, int serviceId)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        Optional<WashService> service = serviceRepository.findById(serviceId);
+        Optional<WashService> service = washServiceRepository.findById(serviceId);
 
         if (service.isEmpty()){
             throw new CarWashServiceException("Service with id " + serviceId + " does not exists");
@@ -119,14 +119,14 @@ public class CarWashServiceImpl implements CarWashService {
                     " does not own service with id " + serviceId);
         }
 
-        serviceRepository.delete(service.get());
+        washServiceRepository.delete(service.get());
     }
 
     @Override
-    public List<ServiceDto> getServices(String ownerPhoneNumber)
+    public List<WashServiceDto> getServices(String ownerPhoneNumber)
             throws CarWashServiceException{
         CarWash carWash = findCarWashByPhoneNumber(ownerPhoneNumber);
-        List<WashService> washServices = serviceRepository.findByCarWash(carWash);
+        List<WashService> washServices = washServiceRepository.findByCarWash(carWash);
         return washServices.stream().map(this::serviceEntityToDto).collect(Collectors.toList());
     }
 
@@ -168,11 +168,11 @@ public class CarWashServiceImpl implements CarWashService {
                 carWash.getLongitude());
     }
 
-    private ServiceDto serviceEntityToDto(WashService washService){
-        return new ServiceDto(
+    private WashServiceDto serviceEntityToDto(WashService washService){
+        return new WashServiceDto(
                 washService.getId(),
                 washService.getCarType(),
-                washService.getServiceType(),
+                washService.getWashServiceType(),
                 washService.getWashTime(),
                 washService.getPrice());
     }

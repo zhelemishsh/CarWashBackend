@@ -1,5 +1,5 @@
 package com.pomika.carwashbackend.model;
 
-public enum ServiceType {
+public enum WashServiceType {
     WASH
 }
