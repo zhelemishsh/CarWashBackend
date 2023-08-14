@@ -11,7 +11,7 @@ import java.util.List;
 public interface CarWashRepository extends JpaRepository<CarWash, Integer> {
     CarWash findByAccount(Account account);
 
-    List<CarWash> findByLatitudeIsBetweenAndLongitudeIsBetween(double latitudeBottom,
+    List<CarWash> findByMapPosition_LatitudeIsBetweenAndMapPosition_LongitudeIsBetween(double latitudeBottom,
                                                                double latitudeTop,
                                                                double longitudeBottom,
                                                                double longitudeTop);
@@ -19,7 +19,7 @@ public interface CarWashRepository extends JpaRepository<CarWash, Integer> {
     default List<CarWash> findCarWashesInSquare(double centerLatitude, double centerLongitude, double radius){
         double latitudeShift = (180 * radius)/(Math.PI * 6378100);
         double longitudeShift = (180 * radius)/(Math.PI * 6356800);
-        return findByLatitudeIsBetweenAndLongitudeIsBetween(
+        return findByMapPosition_LatitudeIsBetweenAndMapPosition_LongitudeIsBetween(
                 centerLatitude - latitudeShift,
                 centerLatitude + latitudeShift,
                 centerLongitude - longitudeShift,

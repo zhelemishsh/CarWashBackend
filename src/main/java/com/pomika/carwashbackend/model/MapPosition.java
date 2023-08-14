@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Embeddable
 public class MapPosition {
-    public MapPosition(){};
+    public MapPosition(){}
 
     private double latitude;
     private double longitude;
