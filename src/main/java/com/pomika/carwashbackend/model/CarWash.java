@@ -17,16 +17,14 @@ public class CarWash {
             double rating,
             String picture,
             String address,
-            double latitude,
-            double longitude
+            MapPosition mapPosition
             ){
         this.account = account;
         this.name = name;
         this.rating = rating;
         this.picture = picture;
         this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.mapPosition = mapPosition;
     }
 
     @Id
@@ -50,11 +48,10 @@ public class CarWash {
     @Column(name = "address")
     private String address;
 
-    @Column(name = "latitude")
-    private double latitude;
-
-    @Column(name = "longitude")
-    private double longitude;
-
-
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride( name = "latitude", column = @Column(name = "latitude")),
+            @AttributeOverride( name = "longitude", column = @Column(name = "longitude"))
+    })
+    private MapPosition mapPosition;
 }

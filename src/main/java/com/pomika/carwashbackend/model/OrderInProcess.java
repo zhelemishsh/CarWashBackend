@@ -17,11 +17,16 @@ public class OrderInProcess {
     public OrderInProcess(Car car,
                           Date startTime,
                           CarWash carWash,
-                          List<WashService> washServices){
+                          List<WashServiceType> washServiceTypes,
+                          int price,
+                          int washTime){
         this.car = car;
         this.startTime = startTime;
-        this.washServices = washServices;
+        this.washServiceTypes = washServiceTypes;
         this.carWash = carWash;
+        this.price = price;
+        this.washTime = washTime;
+        this.isFinished = false;
     }
 
     @Id
@@ -39,7 +44,15 @@ public class OrderInProcess {
     @JoinColumn(name = "car_wash_id")
     private CarWash carWash;
 
-    @ManyToMany
-    private List<WashService> washServices;
+    @Column(name = "wash_service_types")
+    private List<WashServiceType> washServiceTypes;
 
+    @Column(name = "price")
+    private int price;
+
+    @Column(name = "wash_time")
+    private int washTime;
+
+    @Column(name = "is_finished")
+    private boolean isFinished;
 }

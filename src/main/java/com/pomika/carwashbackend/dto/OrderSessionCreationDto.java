@@ -15,15 +15,16 @@ public class OrderSessionCreationDto {
             @JsonProperty("endTime") Date endTime,
             @JsonProperty("car") CarDto car,
             @JsonProperty("wash_services") List<WashServiceType> washServiceTypes,
-            @JsonProperty("latitude") double latitude,
-            @JsonProperty("longitude") double longitude,
-            @JsonProperty("radius") double radius
+            @JsonProperty("search_area") SearchAreaDto searchAreaDto
     ){
         this.startTime = startTime;
         this.endTime = endTime;
         this.car = car;
         this.washServiceTypes = washServiceTypes;
-        this.searchArea = new SearchArea(latitude,longitude,radius);
+        this.searchArea = new SearchArea(
+                searchAreaDto.getMapPositionDto().getLatitude(),
+                searchAreaDto.getMapPositionDto().getLongitude(),
+                searchAreaDto.getRadius());
     }
 
     private final Date startTime;

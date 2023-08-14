@@ -27,11 +27,8 @@ public class OfferDto {
     @JsonProperty("car_wash_address")
     private final String carWashAddress;
 
-    @JsonProperty("latitude")
-    private final double latitude;
-
-    @JsonProperty("longitude")
-    private final double longitude;
+    @JsonProperty("map_position")
+    private final MapPositionDto mapPositionDto;
 
     @JsonProperty("car_wash_name")
     private final String carWashName;
