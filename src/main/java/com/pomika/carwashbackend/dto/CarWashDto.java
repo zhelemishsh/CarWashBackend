@@ -26,9 +26,7 @@ public class CarWashDto {
     @JsonProperty("address")
     private final String address;
 
-    @JsonProperty("latitude")
-    private final double latitude;
+    @JsonProperty("map_position")
+    private final MapPositionDto mapPositionDto;
 
-    @JsonProperty("longitude")
-    private final double longitude;
 }

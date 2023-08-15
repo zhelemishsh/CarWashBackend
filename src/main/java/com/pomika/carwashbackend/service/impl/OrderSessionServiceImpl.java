@@ -45,6 +45,12 @@ public class OrderSessionServiceImpl implements OrderSessionService {
             throws OrderSessionServiceException{
         UserAccount userAccount = findUserByPhoneNumber(userPhoneNumber);
 
+        OrderInProcess orderInProcess = orderInProcessRepository.findByCar_UserAccount(userAccount);
+        if (orderInProcess != null){
+            throw new OrderSessionServiceException("User with phone number "
+                    + userPhoneNumber + " have not finished previous order yet");
+        }
+
         if (sessions.get(userAccount.getId()) != null){
             throw new OrderSessionServiceException("Session already opened by user with phone number "
                     + userPhoneNumber);
@@ -64,7 +70,8 @@ public class OrderSessionServiceImpl implements OrderSessionService {
                         orderSessionCreationDto.getCar().getNumber(),
                         orderSessionCreationDto.getCar().getName(),
                         orderSessionCreationDto.getCar().getType()),
-                services
+                services,
+                orderSessionCreationDto.getWashServiceTypes()
         );
 
         sessions.put(userAccount.getId(), order);
@@ -93,7 +100,9 @@ public class OrderSessionServiceImpl implements OrderSessionService {
                 order.getCar(),
                 acceptedOffer.getStartTime(),
                 carWashServicesInOrder.getCarWash(),
-                carWashServicesInOrder.getServices()
+                order.getWashServiceTypes(),
+                acceptedOffer.getPrice(),
+                acceptedOffer.getWashTime()
         );
 
         orderInProcessRepository.save(orderInProcess);
@@ -261,12 +270,13 @@ public class OrderSessionServiceImpl implements OrderSessionService {
             double centerLongitude,
             double radius
     ){
-        double theta = centerLongitude - carWash.getLongitude();
+        double theta = centerLongitude - carWash.getMapPosition().getLongitude();
         double distance = 60 * 1.1515 * (180/Math.PI) * Math.acos(
-                Math.sin(centerLatitude * (Math.PI/180)) * Math.sin(carWash.getLatitude() * (Math.PI/180)) +
-                Math.cos(centerLatitude * (Math.PI/180)) *
-                Math.cos(carWash.getLatitude() * (Math.PI/180)) *
-                Math.cos(theta * (Math.PI/180))
+                Math.sin(centerLatitude * (Math.PI/180)) *
+                        Math.sin(carWash.getMapPosition().getLatitude() * (Math.PI/180)) +
+                        Math.cos(centerLatitude * (Math.PI/180)) *
+                                Math.cos(carWash.getMapPosition().getLatitude() * (Math.PI/180)) *
+                                Math.cos(theta * (Math.PI/180))
         );
         return radius > distance;
     }
@@ -320,8 +330,10 @@ public class OrderSessionServiceImpl implements OrderSessionService {
                 offer.getWashTime(),
                 carWash.getRating(),
                 carWash.getAddress(),
-                carWash.getLatitude(),
-                carWash.getLongitude(),
+                new MapPositionDto(
+                        carWash.getMapPosition().getLatitude(),
+                        carWash.getMapPosition().getLongitude()
+                ),
                 carWash.getName()
         );
     }

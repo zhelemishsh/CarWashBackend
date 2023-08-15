@@ -53,8 +53,7 @@ public class CarWashServiceImpl implements CarWashService {
                 5.0, //TODO rating
                 carWashCreationDto.getPicture(),
                 carWashCreationDto.getAddress(),
-                carWashCreationDto.getLatitude(),
-                carWashCreationDto.getLongitude()));
+                carWashCreationDto.getMapPosition()));
     }
 
     @Override
@@ -64,8 +63,7 @@ public class CarWashServiceImpl implements CarWashService {
         carWash.setName(carWashUpdateDto.getName());
         carWash.setAddress(carWashUpdateDto.getAddress());
         carWash.setPicture(carWashUpdateDto.getPicture());
-        carWash.setLatitude(carWashUpdateDto.getLatitude());
-        carWash.setLongitude(carWashUpdateDto.getLongitude());
+        carWash.setMapPosition(carWashUpdateDto.getMapPosition());
         carWashRepository.save(carWash);
     }
 
@@ -164,8 +162,10 @@ public class CarWashServiceImpl implements CarWashService {
                 carWash.getPicture(),
                 carWash.getRating(),
                 carWash.getAddress(),
-                carWash.getLatitude(),
-                carWash.getLongitude());
+                new MapPositionDto(
+                        carWash.getMapPosition().getLatitude(),
+                        carWash.getMapPosition().getLongitude()
+                ));
     }
 
     private WashServiceDto serviceEntityToDto(WashService washService){

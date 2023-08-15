@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,13 +20,15 @@ public class Order {
     private Map<String, CarWashServicesInOrder> carWashAndServices;
     private double bestRating;
     private int bestPrice;
+    private List<WashServiceType> washServiceTypes;
 
     public Order(
             int userId,
             Date startTime,
             Date endTime,
             Car car,
-            Map<String,CarWashServicesInOrder> carWashAndServices
+            Map<String,CarWashServicesInOrder> carWashAndServices,
+            List<WashServiceType> washServiceTypes
     ){
         this.userId = userId;
         this.startTime = startTime;
@@ -35,6 +38,7 @@ public class Order {
         this.bestPrice = 0;
         this.bestRating = 0;
         this.carWashAndServices = carWashAndServices;
+        this.washServiceTypes = washServiceTypes;
     }
 
     @Override

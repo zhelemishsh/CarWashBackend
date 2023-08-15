@@ -1,6 +1,7 @@
 package com.pomika.carwashbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.pomika.carwashbackend.model.MapPosition;
 import lombok.Getter;
 
 @Getter
@@ -11,16 +12,17 @@ public class CarWashCreationDto {
             @JsonProperty("name") String name,
             @JsonProperty("picture") String picture,
             @JsonProperty("address") String address,
-            @JsonProperty("latitude") double latitude,
-            @JsonProperty("longitude") double longitude
-    ){
+            @JsonProperty("map_position")MapPositionDto mapPositionDto
+            ){
         this.phoneNumber = phoneNumber;
         this.password = password;
         this.name = name;
         this.picture = picture;
         this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.mapPosition = new MapPosition(
+                mapPositionDto.getLatitude(),
+                mapPositionDto.getLongitude()
+        );
     }
 
     private final String phoneNumber;
@@ -28,6 +30,5 @@ public class CarWashCreationDto {
     private final String name;
     private final String picture;
     private final String address;
-    private final double latitude;
-    private final double longitude;
+    private final MapPosition mapPosition;
 }
