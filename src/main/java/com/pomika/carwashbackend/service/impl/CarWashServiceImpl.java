@@ -45,7 +45,7 @@ public class CarWashServiceImpl implements CarWashService {
                 0,
                 carWashCreationDto.getPassword(),
                 carWashCreationDto.getPhoneNumber(),
-                AccountRole.CARWASH));
+                AccountRole.ROLE_CARWASH));
 
         carWashRepository.save(new CarWash(
                 account,
