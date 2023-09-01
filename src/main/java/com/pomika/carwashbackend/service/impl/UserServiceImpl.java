@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
                 0,
                 userCreationDto.getPassword(),
                 userCreationDto.getPhoneNumber(),
-                AccountRole.USER));
+                AccountRole.ROLE_USER));
 
         userAccountRepository.save(new UserAccount(
                 account,

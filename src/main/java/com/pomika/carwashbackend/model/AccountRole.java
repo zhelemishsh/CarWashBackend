@@ -1,6 +1,6 @@
 package com.pomika.carwashbackend.model;
 
 public enum AccountRole {
-    USER,
-    CARWASH
+    ROLE_USER,
+    ROLE_CARWASH
 }
